@@ -3,93 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Carburantes - Ministerio (API REST)</title>
+    <title>EcoFuel Spain | Observatorio de Carburantes</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Consulta Nacional de Carburantes</h1>
-        <p>Datos en tiempo real e históricos | API REST Ministerio para la Transición Ecológica</p>
-    </header>
-
-    <main class="container">
-        <!-- Navegación por pestañas -->
-        <nav class="tabs">
-            <button class="tab-btn active" data-tab="tab-ccaa">Estaciones por CC.AA.</button>
-            <button class="tab-btn" data-tab="tab-maritimos">Postes Marítimos por Provincia</button>
-            <button class="tab-btn" data-tab="tab-historico">Precios por Provincia y Día</button>
-        </nav>
-
-        <!-- MÓDULO 1: Estaciones por Comunidad Autónoma -->
-        <section id="tab-ccaa" class="tab-content active">
-            <h2>Estaciones de Servicio Terrestres por Comunidad Autónoma</h2>
-            <div class="controls">
-                <label for="select-ccaa">Comunidad Autónoma:</label>
-                <select id="select-ccaa">
-                    <option value="">Cargando comunidades...</option>
-                </select>
-                <button id="btn-buscar-ccaa" class="btn-primary">Consultar Estaciones</button>
-            </div>
-        </section>
-
-        <!-- MÓDULO 2: Postes Marítimos por Provincia -->
-        <section id="tab-maritimos" class="tab-content">
-            <h2>Postes Marítimos por Provincia</h2>
-            <div class="controls">
-                <label for="select-prov-mar">Provincia:</label>
-                <select id="select-prov-mar">
-                    <option value="">Cargando provincias...</option>
-                </select>
-                <button id="btn-buscar-mar" class="btn-primary">Consultar Postes Marítimos</button>
-            </div>
-        </section>
-
-        <!-- MÓDULO 3: Precios por Provincia, Día y Carburante -->
-        <section id="tab-historico" class="tab-content">
-            <h2>Histórico de Precios por Provincia, Fecha y Carburante</h2>
-            <div class="controls grid-controls">
+    <div class="app-layout">
+        <!-- Barra Lateral de Navegación -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-badge">⛽</div>
                 <div>
-                    <label for="select-prov-hist">Provincia:</label>
-                    <select id="select-prov-hist">
-                        <option value="">Cargando provincias...</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="input-fecha">Fecha:</label>
-                    <input type="date" id="input-fecha" value="2026-05-23">
-                </div>
-                <div>
-                    <label for="select-producto">Carburante:</label>
-                    <select id="select-producto">
-                        <option value="">Cargando carburantes...</option>
-                    </select>
-                </div>
-                <div class="align-end">
-                    <button id="btn-buscar-hist" class="btn-primary">Consultar Precios</button>
+                    <h1>EcoFuel</h1>
+                    <span>Observatorio MITECO</span>
                 </div>
             </div>
-        </section>
 
-        <!-- Estado y barra de búsqueda local -->
-        <div id="status-bar" class="status-bar hidden"></div>
+            <nav class="side-nav">
+                <p class="nav-label">CONSULTAS API REST</p>
+                <button class="nav-item active" data-view="view-ccaa">
+                    <span class="icon">🗺️</span> Estaciones por CC.AA.
+                </button>
+                <button class="nav-item" data-view="view-maritimos">
+                    <span class="icon">⚓</span> Postes Marítimos
+                </button>
+                <button class="nav-item" data-view="view-historico">
+                    <span class="icon">📅</span> Histórico por Fecha
+                </button>
+            </nav>
 
-        <div id="filter-box" class="filter-box hidden">
-            <input type="text" id="local-search" placeholder="Filtrar resultados por municipio, dirección o rótulo...">
-            <span id="result-count"></span>
-        </div>
+            <div class="sidebar-footer">
+                <p>Fuente oficial:</p>
+                <a href="https://geoportalgasolineras.es/" target="_blank">Geoportal Hidrocarburos</a>
+            </div>
+        </aside>
 
-        <!-- Tabla de Resultados -->
-        <div class="table-wrapper">
-            <table id="results-table" class="hidden">
-                <thead id="table-head"></thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
-    </main>
+        <!-- Área Principal -->
+        <main class="main-panel">
+            <!-- Cabecera Superior -->
+            <header class="topbar">
+                <div>
+                    <h2 id="view-title">Estaciones de Servicio por Comunidad Autónoma</h2>
+                    <p id="view-subtitle">Consulta en tiempo real de precios terrestres en territorio nacional</p>
+                </div>
+                <button id="btn-export-csv" class="btn-outline hidden">⬇ Exportar CSV</button>
+            </header>
 
-    <footer>
-        <p>Fuente de datos: <a href="https://geoportalgasolineras.es/" target="_blank">Geoportal de Hidrocarburos (MITECO)</a></p>
-    </footer>
+            <!-- PANEL DE FILTROS -->
+            <section class="filter-card">
+                <!-- Vista 1: CCAA -->
+                <div id="view-ccaa" class="filter-group active">
+                    <div class="input-block">
+                        <label for="select-ccaa">Seleccione Comunidad Autónoma</label>
+                        <select id="select-ccaa">
+                            <option value="">Cargando catálogo...</option>
+                        </select>
+                    </div>
+                    <button id="btn-buscar-ccaa" class="btn-accent">Buscar Estaciones</button>
+                </div>
+
+                <!-- Vista 2: Postes Marítimos -->
+                <div id="view-maritimos" class="filter-group">
+                    <div class="input-block">
+                        <label for="select-prov-mar">Seleccione Provincia Costera / Insular</label>
+                        <select id="select-prov-mar">
+                            <option value="">Cargando provincias...</option>
+                        </select>
+                    </div>
+                    <button id="btn-buscar-mar" class="btn-accent">Buscar Postes Marítimos</button>
+                </div>
+
+                <!-- Vista 3: Histórico -->
+                <div id="view-historico" class="filter-group grid-3">
+                    <div class="input-block">
+                        <label for="select-prov-hist">Provincia</label>
+                        <select id="select-prov-hist">
+                            <option value="">Cargando provincias...</option>
+                        </select>
+                    </div>
+                    <div class="input-block">
+                        <label for="input-fecha">Fecha de Consulta</label>
+                        <input type="date" id="input-fecha" value="2026-05-23">
+                    </div>
+                    <div class="input-block">
+                        <label for="select-producto">Carburante</label>
+                        <select id="select-producto">
+                            <option value="">Cargando carburantes...</option>
+                        </select>
+                    </div>
+                    <button id="btn-buscar-hist" class="btn-accent">Consultar Histórico</button>
+                </div>
+            </section>
+
+            <!-- Mensaje de Estado -->
+            <div id="alert-box" class="alert-box hidden"></div>
+
+            <!-- Tarjetas Resumen (KPIs) -->
+            <section id="kpi-section" class="kpi-grid hidden">
+                <div class="kpi-card">
+                    <span class="kpi-title">Total Localizadas</span>
+                    <strong id="kpi-total" class="kpi-value">0</strong>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">Precio Mínimo Detectado</span>
+                    <strong id="kpi-min" class="kpi-value highlight-green">-</strong>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">Precio Medio</span>
+                    <strong id="kpi-avg" class="kpi-value">-</strong>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">Actualización API</span>
+                    <strong id="kpi-date" class="kpi-value small-text">-</strong>
+                </div>
+            </section>
+
+            <!-- Buscador Rápido y Selector de Vista -->
+            <div id="toolbar" class="toolbar hidden">
+                <input type="text" id="quick-filter" placeholder="🔍 Filtrar por municipio, rótulo (Repsol, Cepsa...) o calle...">
+                <div class="view-switch">
+                    <button id="mode-cards" class="switch-btn active">Tarjetas</button>
+                    <button id="mode-table" class="switch-btn">Tabla</button>
+                </div>
+            </div>
+
+            <!-- Contenedor de Resultados en Tarjetas -->
+            <div id="cards-container" class="cards-grid hidden"></div>
+
+            <!-- Contenedor de Resultados en Tabla -->
+            <div id="table-container" class="table-card hidden">
+                <table>
+                    <thead id="table-head"></thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
 
     <script src="app.js"></script>
 </body>
