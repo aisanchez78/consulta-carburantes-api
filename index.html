@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Carburantes - Ministerio (API REST)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Consulta Nacional de Carburantes</h1>
+        <p>Datos en tiempo real e históricos | API REST Ministerio para la Transición Ecológica</p>
+    </header>
+
+    <main class="container">
+        <!-- Navegación por pestañas -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="tab-ccaa">Estaciones por CC.AA.</button>
+            <button class="tab-btn" data-tab="tab-maritimos">Postes Marítimos por Provincia</button>
+            <button class="tab-btn" data-tab="tab-historico">Precios por Provincia y Día</button>
+        </nav>
+
+        <!-- MÓDULO 1: Estaciones por Comunidad Autónoma -->
+        <section id="tab-ccaa" class="tab-content active">
+            <h2>Estaciones de Servicio Terrestres por Comunidad Autónoma</h2>
+            <div class="controls">
+                <label for="select-ccaa">Comunidad Autónoma:</label>
+                <select id="select-ccaa">
+                    <option value="">Cargando comunidades...</option>
+                </select>
+                <button id="btn-buscar-ccaa" class="btn-primary">Consultar Estaciones</button>
+            </div>
+        </section>
+
+        <!-- MÓDULO 2: Postes Marítimos por Provincia -->
+        <section id="tab-maritimos" class="tab-content">
+            <h2>Postes Marítimos por Provincia</h2>
+            <div class="controls">
+                <label for="select-prov-mar">Provincia:</label>
+                <select id="select-prov-mar">
+                    <option value="">Cargando provincias...</option>
+                </select>
+                <button id="btn-buscar-mar" class="btn-primary">Consultar Postes Marítimos</button>
+            </div>
+        </section>
+
+        <!-- MÓDULO 3: Precios por Provincia, Día y Carburante -->
+        <section id="tab-historico" class="tab-content">
+            <h2>Histórico de Precios por Provincia, Fecha y Carburante</h2>
+            <div class="controls grid-controls">
+                <div>
+                    <label for="select-prov-hist">Provincia:</label>
+                    <select id="select-prov-hist">
+                        <option value="">Cargando provincias...</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="input-fecha">Fecha:</label>
+                    <input type="date" id="input-fecha" value="2026-05-23">
+                </div>
+                <div>
+                    <label for="select-producto">Carburante:</label>
+                    <select id="select-producto">
+                        <option value="">Cargando carburantes...</option>
+                    </select>
+                </div>
+                <div class="align-end">
+                    <button id="btn-buscar-hist" class="btn-primary">Consultar Precios</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Estado y barra de búsqueda local -->
+        <div id="status-bar" class="status-bar hidden"></div>
+
+        <div id="filter-box" class="filter-box hidden">
+            <input type="text" id="local-search" placeholder="Filtrar resultados por municipio, dirección o rótulo...">
+            <span id="result-count"></span>
+        </div>
+
+        <!-- Tabla de Resultados -->
+        <div class="table-wrapper">
+            <table id="results-table" class="hidden">
+                <thead id="table-head"></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer>
+        <p>Fuente de datos: <a href="https://geoportalgasolineras.es/" target="_blank">Geoportal de Hidrocarburos (MITECO)</a></p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
