@@ -102,6 +102,9 @@ select, input[type="date"], input[type="text"] {
 /* Barra herramientas */
 .toolbar { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
 .toolbar input { max-width: 420px; background: var(--surface); }
+.toolbar-left { display: flex; gap: 0.8rem; flex-grow: 1; flex-wrap: wrap; }
+.toolbar-left input { max-width: 380px; background: var(--surface); }
+.toolbar-left select { max-width: 240px; background: var(--surface); cursor: pointer; }
 
 .view-switch { display: flex; background: #e5e7eb; padding: 3px; border-radius: 8px; }
 .switch-btn {

@@ -1,6 +1,7 @@
 const API_BASE = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes";
 
 let datasetActual = [];
+let datasetMostrado = [];
 let vistaActiva = "ccaa"; // "ccaa" | "maritimos" | "historico"
 let modoVisual = "cards"; // "cards" | "table"
 let etiquetaCarburante = "";
@@ -28,9 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("btn-buscar-ccaa").addEventListener("click", consultarPorCCAA);
     document.getElementById("btn-buscar-mar").addEventListener("click", consultarMaritimos);
     document.getElementById("btn-buscar-hist").addEventListener("click", consultarHistorico);
-    document.getElementById("quick-filter").addEventListener("input", filtrarLocalmente);
+    
+    // Eventos de filtrado y ordenación combinados
+    document.getElementById("quick-filter").addEventListener("input", aplicarFiltrosYOrden);
+    document.getElementById("sort-select").addEventListener("change", aplicarFiltrosYOrden);
+    
     document.getElementById("btn-export-csv").addEventListener("click", exportarCSV);
-
     document.getElementById("mode-cards").addEventListener("click", () => cambiarModoVisual("cards"));
     document.getElementById("mode-table").addEventListener("click", () => cambiarModoVisual("table"));
 });
@@ -97,7 +101,7 @@ async function consultarPorCCAA() {
         datasetActual = data.ListaEESSPrecio || [];
         fechaApi = data.Fecha || "Hoy";
         vistaActiva = "ccaa";
-        procesarYMostrar(datasetActual);
+        reiniciarControlesYMostrar();
     } catch (e) {
         mostrarAlerta("Error al obtener datos de estaciones terrestres.", true);
     }
@@ -115,7 +119,7 @@ async function consultarMaritimos() {
         datasetActual = data.ListaEESSPrecio || [];
         fechaApi = data.Fecha || "Hoy";
         vistaActiva = "maritimos";
-        procesarYMostrar(datasetActual);
+        reiniciarControlesYMostrar();
     } catch (e) {
         mostrarAlerta("Error al consultar postes marítimos.", true);
     }
@@ -144,20 +148,27 @@ async function consultarHistorico() {
         datasetActual = data.ListaEESSPrecio || [];
         fechaApi = fechaFormateada;
         vistaActiva = "historico";
-        procesarYMostrar(datasetActual);
+        reiniciarControlesYMostrar();
     } catch (e) {
         mostrarAlerta("No hay datos disponibles para esa fecha o provincia.", true);
     }
 }
 
+function reiniciarControlesYMostrar() {
+    document.getElementById("quick-filter").value = "";
+    document.getElementById("sort-select").value = "default";
+    procesarYMostrar(datasetActual);
+}
+
 function procesarYMostrar(lista) {
     document.getElementById("alert-box").classList.add("hidden");
 
-    if (lista.length === 0) {
+    if (datasetActual.length === 0) {
         limpiarPantalla();
         return mostrarAlerta("No se encontraron registros para los filtros seleccionados.", true);
     }
 
+    datasetMostrado = lista;
     actualizarKPIs(lista);
     document.getElementById("kpi-section").classList.remove("hidden");
     document.getElementById("toolbar").classList.remove("hidden");
@@ -168,11 +179,58 @@ function procesarYMostrar(lista) {
     aplicarVisibilidadModo();
 }
 
+// Extrae el valor numérico del precio principal según el modo activo
+function obtenerPrecioNumerico(item) {
+    const clave = vistaActiva === "historico" ? "PrecioProducto" : "Precio Gasolina 95 E5";
+    const raw = item[clave] || item["Precio Gasoleo A"] || "";
+    const valor = parseFloat(raw.replace(",", "."));
+    return isNaN(valor) ? null : valor;
+}
+
+// Combina filtro de texto y ordenación seleccionada
+function aplicarFiltrosYOrden() {
+    const query = document.getElementById("quick-filter").value.toLowerCase().trim();
+    const criterioOrden = document.getElementById("sort-select").value;
+
+    // 1. Filtrado
+    let resultado = datasetActual.filter(item =>
+        (item["Municipio"] && item["Municipio"].toLowerCase().includes(query)) ||
+        (item["Rótulo"] && item["Rótulo"].toLowerCase().includes(query)) ||
+        (item["Dirección"] && item["Dirección"].toLowerCase().includes(query))
+    );
+
+    // 2. Ordenación (se trabaja sobre copia para no alterar el orden original)
+    resultado = [...resultado];
+
+    if (criterioOrden === "price-asc") {
+        resultado.sort((a, b) => {
+            const pA = obtenerPrecioNumerico(a);
+            const pB = obtenerPrecioNumerico(b);
+            if (pA === null) return 1;  // Enviar estaciones sin precio al final
+            if (pB === null) return -1;
+            return pA - pB;
+        });
+    } else if (criterioOrden === "price-desc") {
+        resultado.sort((a, b) => {
+            const pA = obtenerPrecioNumerico(a);
+            const pB = obtenerPrecioNumerico(b);
+            if (pA === null) return 1;
+            if (pB === null) return -1;
+            return pB - pA;
+        });
+    } else if (criterioOrden === "muni-asc") {
+        resultado.sort((a, b) => (a["Municipio"] || "").localeCompare(b["Municipio"] || "", "es"));
+    } else if (criterioOrden === "brand-asc") {
+        resultado.sort((a, b) => (a["Rótulo"] || "").localeCompare(b["Rótulo"] || "", "es"));
+    }
+
+    procesarYMostrar(resultado);
+}
+
 function actualizarKPIs(lista) {
     document.getElementById("kpi-total").textContent = lista.length;
     document.getElementById("kpi-date").textContent = fechaApi;
 
-    // Extraer precios numéricos para calcular mínimo y media
     const clavePrecio = vistaActiva === "historico" ? "PrecioProducto" : "Precio Gasolina 95 E5";
     const precios = lista
         .map(item => parseFloat((item[clavePrecio] || "").replace(",", ".")))
@@ -193,7 +251,6 @@ function renderizarTarjetas(lista) {
     const cont = document.getElementById("cards-container");
     cont.innerHTML = "";
 
-    // Limitar a 150 tarjetas en vista visual para mantener fluidez en navegador
     lista.slice(0, 150).forEach(item => {
         let preciosHTML = "";
         if (vistaActiva === "historico") {
@@ -281,22 +338,10 @@ function aplicarVisibilidadModo() {
     document.getElementById("table-container").classList.toggle("hidden", modoVisual !== "table");
 }
 
-function filtrarLocalmente(e) {
-    const q = e.target.value.toLowerCase();
-    const filtrados = datasetActual.filter(item =>
-        (item["Municipio"] && item["Municipio"].toLowerCase().includes(q)) ||
-        (item["Rótulo"] && item["Rótulo"].toLowerCase().includes(q)) ||
-        (item["Dirección"] && item["Dirección"].toLowerCase().includes(q))
-    );
-    actualizarKPIs(filtrados);
-    renderizarTarjetas(filtrados);
-    renderizarTabla(filtrados);
-}
-
 function exportarCSV() {
-    if (!datasetActual.length) return;
+    if (!datasetMostrado.length) return;
     const filas = [["Rotulo", "Municipio", "Direccion", "Gasolina_95", "Gasoleo_A", "Precio_Producto"]];
-    datasetActual.forEach(i => {
+    datasetMostrado.forEach(i => {
         filas.push([
             `"${(i["Rótulo"] || "").replace(/"/g, '""')}"`,
             `"${(i["Municipio"] || "").replace(/"/g, '""')}"`,

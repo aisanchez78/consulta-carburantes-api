@@ -117,9 +117,18 @@
                 </div>
             </section>
 
-            <!-- Buscador Rápido y Selector de Vista -->
+<!-- Buscador Rápido, Ordenación y Selector de Vista -->
             <div id="toolbar" class="toolbar hidden">
-                <input type="text" id="quick-filter" placeholder="🔍 Filtrar por municipio, rótulo (Repsol, Cepsa...) o calle...">
+                <div class="toolbar-left">
+                    <input type="text" id="quick-filter" placeholder="🔍 Filtrar por municipio, rótulo (Repsol, Cepsa...) o calle...">
+                    <select id="sort-select" aria-label="Ordenar resultados">
+                        <option value="default">Orden: Por defecto (API)</option>
+                        <option value="price-asc">Precio: Más barato primero</option>
+                        <option value="price-desc">Precio: Más caro primero</option>
+                        <option value="muni-asc">Municipio: A - Z</option>
+                        <option value="brand-asc">Rótulo: A - Z</option>
+                    </select>
+                </div>
                 <div class="view-switch">
                     <button id="mode-cards" class="switch-btn active">Tarjetas</button>
                     <button id="mode-table" class="switch-btn">Tabla</button>
